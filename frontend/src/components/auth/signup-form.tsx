@@ -103,7 +103,7 @@ export function SignupForm({className, ...props}: React.ComponentProps<"div">) {
                 <Input 
                   type="text" 
                   id="username"
-                  placeholder="Tên đăng nhập..."
+                  placeholder="username"
                   {...register("username")}
                 />
                 {/* error message */}
