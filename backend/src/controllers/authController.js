@@ -4,7 +4,6 @@ import jwt from 'jsonwebtoken';
 import Session from '../models/Session.js';
 import crypto from 'crypto';
 
-
 const ACCESS_TOKEN_TTL = '30m'; //thường là dưới 15m
 const REFRESH_TOKEN_TTL = 14 * 24 * 60 * 60 * 1000; // 14 ngày
 
@@ -167,3 +166,4 @@ export const refreshToken = async(req, res) => {
     return res.status(500).json({message: "Lỗi hệ thống"});
   }
 };
+

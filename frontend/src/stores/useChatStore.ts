@@ -47,7 +47,7 @@ export const useChatStore = create<ChatState>()(
 
         if(nextCursor === null) return;
         
-        set({convoLoading: true});
+        set({messageLoading: true});
 
         try {
           const {messages: fetched, cursor} = await chatService.fetchMessages(convoId, nextCursor);
