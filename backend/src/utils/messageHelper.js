@@ -1,3 +1,5 @@
+import { io } from "../socket/index.js";
+
 export const updateConversationAfterCreateMessage = (conversation, message, senderId) => {
     conversation.set({
         seeBy: [],
@@ -20,3 +22,15 @@ export const updateConversationAfterCreateMessage = (conversation, message, send
         conversation.unreadCounts.set(memberId, isSender ? 0 : prev + 1);
     });
 };
+
+export const emitNewMessage = (io, conversation, message) => {
+    io.to(conversation._id.toString()).emit("new-message", {
+        message,
+        conversation: {
+            _id: conversation._id,
+            lastMessage: conversation.lastMessage,
+            lastMessageAt: conversation.lastMessageAt,
+        },
+        unreadCounts: conversation.unreadCounts
+    });
+}

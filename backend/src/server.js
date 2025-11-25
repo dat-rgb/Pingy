@@ -1,42 +1,38 @@
-import cors from 'cors';
-import express from "express";
 import dotenv from "dotenv";
 import { connectDB } from "./libs/db.js";
 import authRoute from "./routes/authRoute.js";
-import userRoute from "./routes/userRoute.js"
+import userRoute from "./routes/userRoute.js";
 import friendRoute from "./routes/friendRoute.js";
 import messageRoute from "./routes/messageRoute.js";
 import conversationRoute from "./routes/conversationRoute.js";
-import cookieParser from 'cookie-parser';
 import { protectedRoute } from "./middlewares/authMiddlewares.js";
+import cookieParser from "cookie-parser";
+import cors from "cors";
+import { app, server } from "./socket/index.js"; // chỉ import app và server
 
 dotenv.config();
-
-const app = express();
 const PORT = process.env.PORT || 5001;
 
-//middlewares
-app.use(express.json());
+// Middleware (trên app đã import từ socket)
 app.use(cookieParser());
-
 app.use(cors({
   origin: process.env.CLIENT_URL,
   credentials: true
 }));
 
-//public routes
-app.use('/api/auth', authRoute);
+// Public routes
+app.use("/api/auth", authRoute);
 
-//private routes
+// Private routes
 app.use(protectedRoute);
-app.use('/api/users', userRoute);
-app.use('/api/friends', friendRoute);
-app.use('/api/messages', messageRoute);
-app.use('/api/conversations', conversationRoute);
+app.use("/api/users", userRoute);
+app.use("/api/friends", friendRoute);
+app.use("/api/messages", messageRoute);
+app.use("/api/conversations", conversationRoute);
 
+// Start server
 connectDB().then(() => {
-    app.listen(PORT, () => {
-        console.log(`Server bắt đầu trên cổng ${PORT}`);
-    });
+  server.listen(PORT, () => {
+    console.log(`Server chạy trên cổng ${PORT}`);
+  });
 });
-
