@@ -27,4 +27,31 @@ export const chatService = {
 
     return { messages: res.data.messages, cursor: res.data.nextCursor };
   },
+
+  async sendDirectMessage(
+    recipientId: string,
+    content: string = "",
+    imgUrl?: string,
+    conversationId?: string
+  ) {
+      const { accessToken } = useAuthStore.getState(); // lấy token
+
+      const res = await api.post(
+      '/messages/direct',
+      { recipientId, content, imgUrl, conversationId },
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+
+    return res.data.messages;
+  },
+
+
+  async sendGroupMessage(conversationId: string, content: string = "", imgUrl?: string) {
+    const res = await api.post('/messages/group',{
+      conversationId, content, imgUrl
+    });
+
+    return res.data.messages;
+  },
+  
 };

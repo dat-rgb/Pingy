@@ -4,56 +4,62 @@ import Friend from "../models/Friend.js";
 const pair = (a,b) => (a < b ? [a, b] : [b, a]);
 
 export const checkFriendship = async (req, res, next) => {
-    try {
-        const me = req.user._id.toString();
-        const recipientId = req.body?.recipientId ?? null;
-        const memberIds = req.body?.memberIds ?? null;
+  try {
+    const me = req.user._id.toString();
 
-        if(!recipientId && memberIds.length === 0) {
-            return res
-            .status(400)
-            .json({message: "Cần cung cấp recipientId hoặc memberIds"});
-        }
+    const recipientId = req.body?.recipientId ?? null;
+    const memberIds = req.body?.memberIds ?? [];
 
-              if(recipientId) {
-            const [userA, userB] = pair(me, recipientId);
-
-            const isFriend = await Friend.findOne({userA, userB});
-
-            if(!isFriend) {
-                return res.status(403).json({message: "Bạn chưa kết bạn với người này"})
-            }
-
-            return next();
-        }
-
-        // chat nhóm
-        const friendChecks = memberIds.map(async (memberId) => {
-            const [userA, userB] = pair(me, memberId);
-            const friend = await Friend.findOne({userA, userB});
-            return friend ? null : memberId;
-        });
-        
-        const results = await Promise.all(friendChecks);
-        const notFriends = results.filter(Boolean);
-
-        if(notFriends.length > 0) {
-            return res
-            .status(403)
-            .json({message: "Bạn chỉ có thể thêm bạn bè vào nhóm.", notFriends});
-        }
-
-        next();
-
-    } catch (error) {
-        console.error("Lỗi xảy khi checkFriendsip", error);
-        return res.status(500).json({message: "Lỗi hệ thống"});
+    // Không có recipientId (direct) và không có memberIds (group)
+    if (!recipientId && memberIds.length === 0) {
+      return res
+        .status(400)
+        .json({ message: "Cần cung cấp recipientId hoặc memberIds" });
     }
+
+    // DIRECT
+    if (recipientId) {
+      const [userA, userB] = pair(me, recipientId);
+      const isFriend = await Friend.findOne({ userA, userB });
+
+      if (!isFriend) {
+        return res
+          .status(403)
+          .json({ message: "Bạn chưa kết bạn với người này" });
+      }
+
+      return next();
+    }
+
+    // GROUP
+    const friendChecks = memberIds.map(async (memberId) => {
+      const [userA, userB] = pair(me, memberId);
+      const friend = await Friend.findOne({ userA, userB });
+      return friend ? null : memberId;
+    });
+
+    const results = await Promise.all(friendChecks);
+    const notFriends = results.filter(Boolean);
+
+    if (notFriends.length > 0) {
+      return res.status(403).json({
+        message: "Bạn chỉ có thể thêm bạn bè vào nhóm.",
+        notFriends,
+      });
+    }
+
+    next();
+  } catch (error) {
+    console.error("Lỗi xảy khi checkFriendsip", error);
+    return res.status(500).json({ message: "Lỗi hệ thống" });
+  }
 };
+
 
 export const checkGroupMembership = async (req, res, next) => {
   try {
-    const { conversationId } = req.body;
+    const conversationId =
+      req.body.conversationId || req.params.conversationId;
     const userId = req.user._id;
 
     if (!conversationId) {
@@ -67,7 +73,9 @@ export const checkGroupMembership = async (req, res, next) => {
     }
 
     if (conversation.type !== "group") {
-      return res.status(400).json({ message: "Đây không phải cuộc trò chuyện nhóm" });
+      return res
+        .status(400)
+        .json({ message: "Đây không phải cuộc trò chuyện nhóm" });
     }
 
     const isMember = conversation.participants.some(
@@ -75,7 +83,9 @@ export const checkGroupMembership = async (req, res, next) => {
     );
 
     if (!isMember) {
-      return res.status(403).json({ message: "Bạn không ở trong group này." });
+      return res
+        .status(403)
+        .json({ message: "Bạn không ở trong group này." });
     }
 
     req.conversation = conversation;
@@ -85,3 +95,4 @@ export const checkGroupMembership = async (req, res, next) => {
     return res.status(500).json({ message: "Lỗi hệ thống" });
   }
 };
+
